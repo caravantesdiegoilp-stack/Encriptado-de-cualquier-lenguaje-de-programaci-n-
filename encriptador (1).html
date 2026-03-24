@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptLab 3301</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#000005;
+  --surface:#03030a;
+  --surface2:#07071a;
+  --border:#0a2a1a;
+  --border2:#0d3d28;
+  --accent:#00ff88;
+  --accent2:#00cc66;
+  --accent3:#ff6600;
+  --accent4:#ffcc00;
+  --dim:#003322;
+  --text:#c8ffd4;
+  --muted:#2a7a4a;
+  --danger:#ff2244;
+  --glow: 0 0 10px rgba(0,255,136,0.4), 0 0 30px rgba(0,255,136,0.1);
+  --glow2: 0 0 20px rgba(0,255,136,0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ─── SCANLINES ─── */
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,0.015) 2px,rgba(0,255,136,0.015) 4px);
+  pointer-events:none;z-index:9999;
+}
+body::after {
+  content:'';
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,5,0.8) 100%);
+  pointer-events:none;z-index:9998;
+}
+
+/* ─── ANIMATED BG ─── */
+.bg-grid {
+  position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+  background-size:60px 60px;
+  animation:gridMove 20s linear infinite;
+}
+@keyframes gridMove { from{background-position:0 0;} to{background-position:60px 60px;} }
+
+.bg-pulse {
+  position:fixed;inset:0;z-index:0;
+  background:radial-gradient(circle at 30% 70%, rgba(0,255,136,0.03) 0%, transparent 50%),
+             radial-gradient(circle at 70% 20%, rgba(0,100,255,0.02) 0%, transparent 40%);
+  animation:bgPulse 8s ease-in-out infinite alternate;
+}
+@keyframes bgPulse { from{opacity:0.5;} to{opacity:1;} }
+
+/* ─── CONTAINER ─── */
+.container { max-width:1200px;margin:0 auto;padding:30px 20px;position:relative;z-index:1; }
+
+/* ─── HEADER ─── */
+header { text-align:center;margin-bottom:40px;position:relative; }
+
+.cicada-eye {
+  width:80px;height:80px;margin:0 auto 20px;position:relative;
+  animation:rotate 20s linear infinite;
+}
+.cicada-eye svg { width:100%;height:100%; }
+
+@keyframes rotate { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+.sys-tag {
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:4px;color:var(--muted);
+  text-transform:uppercase;margin-bottom:8px;
+  animation:blink 3s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+h1 {
+  font-family:'Orbitron',monospace;
+  font-size:clamp(2rem,6vw,4.5rem);
+  font-weight:900;
+  letter-spacing:6px;
+  color:var(--accent);
+  text-shadow:var(--glow2);
+  margin-bottom:4px;
+  animation:flicker 5s ease-in-out infinite;
+}
+@keyframes flicker {
+  0%,96%,100%{opacity:1;}
+  97%{opacity:0.4;}
+  98%{opacity:1;}
+  99%{opacity:0.6;}
+}
+
+.subtitle {
+  font-family:'VT323',monospace;
+  font-size:18px;letter-spacing:3px;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.header-line {
+  width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  margin:20px 0;
+  box-shadow:0 0 10px var(--accent);
+}
+
+/* ─── TERMINAL PANELS ─── */
+.main-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px; }
+@media(max-width:700px){.main-grid{grid-template-columns:1fr;}}
+
+.panel {
+  background:var(--surface);
+  border:1px solid var(--border2);
+  position:relative;
+  overflow:hidden;
+  box-shadow:inset 0 0 30px rgba(0,255,136,0.03), 0 0 1px var(--accent2);
+}
+/* Corner decorations */
+.panel::before,.panel::after {
+  content:'';position:absolute;width:12px;height:12px;
+}
+.panel::before { top:-1px;left:-1px;border-top:2px solid var(--accent);border-left:2px solid var(--accent); }
+.panel::after  { bottom:-1px;right:-1px;border-bottom:2px solid var(--accent);border-right:2px solid var(--accent); }
+
+.panel-header {
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border2);
+  background:linear-gradient(90deg,rgba(0,255,136,0.05),transparent);
+}
+.panel-id {
+  font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:700;letter-spacing:2px;
+  color:var(--accent);
+  text-shadow:var(--glow);
+}
+.panel-status {
+  margin-left:auto;font-size:9px;letter-spacing:1px;color:var(--muted);
+  display:flex;align-items:center;gap:5px;
+}
+.status-dot {
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);
+  animation:statusPulse 2s ease-in-out infinite;
+}
+@keyframes statusPulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+textarea {
+  width:100%;min-height:160px;
+  background:transparent;border:none;outline:none;
+  color:var(--accent);
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;padding:16px;
+  resize:vertical;line-height:1.8;
+  caret-color:var(--accent);
+}
+textarea::placeholder { color:var(--dim); }
+textarea:focus { background:rgba(0,255,136,0.02); }
+
+/* ─── CONTROLS ─── */
+.controls {
+  background:var(--surface);
+  border:1px solid var(--border2);
+  padding:20px;margin-bottom:20px;
+  position:relative;
+  box-shadow:inset 0 0 30px rgba(0,255,136,0.02);
+}
+.controls::before,.controls::after {
+  content:'';position:absolute;width:12px;height:12px;
+}
+.controls::before { top:-1px;left:-1px;border-top:2px solid var(--accent);border-left:2px solid var(--accent); }
+.controls::after  { bottom:-1px;right:-1px;border-bottom:2px solid var(--accent);border-right:2px solid var(--accent); }
+
+.ctrl-label {
+  font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:700;letter-spacing:3px;
+  color:var(--accent);margin-bottom:16px;
+  display:flex;align-items:center;gap:10px;
+}
+.ctrl-label::after { content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent); }
+
+.ctrls-row { display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px; }
+.field { display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px; }
+label { font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted); }
+
+select, input[type="text"] {
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  color:var(--accent);
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;padding:9px 12px;outline:none;
+  transition:all 0.2s;width:100%;
+  -webkit-appearance:none;
+}
+select:focus, input:focus {
+  border-color:var(--accent);
+  box-shadow:var(--glow);
+  background:rgba(0,255,136,0.05);
+}
+select option { background:#07071a;color:var(--accent); }
+
+.algo-desc {
+  background:rgba(0,255,136,0.03);
+  border:1px solid rgba(0,255,136,0.15);
+  border-left:3px solid var(--accent);
+  padding:10px 14px;font-size:12px;
+  color:var(--muted);margin-bottom:16px;line-height:1.7;
+}
+.algo-desc strong { color:var(--accent); }
+
+.btn-row { display:flex;gap:10px;flex-wrap:wrap; }
+
+.btn {
+  font-family:'Orbitron',monospace;
+  font-size:10px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:11px 22px;border:none;cursor:pointer;
+  transition:all 0.15s;position:relative;overflow:hidden;
+}
+.btn::before {
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,0.1);
+  opacity:0;transition:opacity 0.15s;
+}
+.btn:hover::before{opacity:1;}
+.btn:active{transform:scale(0.97);}
+
+.btn-primary {
+  background:transparent;
+  color:var(--accent);
+  border:1px solid var(--accent);
+  box-shadow:var(--glow),inset 0 0 20px rgba(0,255,136,0.05);
+}
+.btn-primary:hover { box-shadow:var(--glow2),inset 0 0 30px rgba(0,255,136,0.1); }
+
+.btn-secondary {
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border2);
+}
+.btn-secondary:hover { border-color:var(--accent);color:var(--accent); }
+
+.btn-detect {
+  background:transparent;color:var(--accent3);
+  border:1px solid rgba(255,102,0,0.4);
+}
+.btn-detect:hover { border-color:var(--accent3);box-shadow:0 0 15px rgba(255,102,0,0.3); }
+
+/* ─── DETECT RESULT ─── */
+.detect-result {
+  display:none;
+  background:rgba(255,102,0,0.05);
+  border:1px solid rgba(255,102,0,0.2);
+  border-left:3px solid var(--accent3);
+  padding:12px 16px;margin-top:12px;font-size:12px;line-height:1.8;
+}
+.detect-result .detect-title {
+  font-family:'Orbitron',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--accent3);margin-bottom:8px;
+}
+.detect-tag {
+  display:inline-block;background:rgba(255,102,0,0.1);
+  border:1px solid rgba(255,102,0,0.3);color:var(--accent3);
+  font-size:10px;padding:2px 8px;margin:2px;letter-spacing:1px;
+}
+
+/* ─── LANG TABS ─── */
+.lang-panel {
+  background:var(--surface);
+  border:1px solid var(--border2);
+  position:relative;
+  box-shadow:inset 0 0 30px rgba(0,255,136,0.02);
+}
+.lang-panel::before,.lang-panel::after {
+  content:'';position:absolute;width:12px;height:12px;z-index:2;
+}
+.lang-panel::before { top:-1px;left:-1px;border-top:2px solid var(--accent);border-left:2px solid var(--accent); }
+.lang-panel::after  { bottom:-1px;right:-1px;border-bottom:2px solid var(--accent);border-right:2px solid var(--accent); }
+
+.lang-tabs {
+  display:flex;overflow-x:auto;
+  border-bottom:1px solid var(--border2);
+  scrollbar-width:thin;
+  scrollbar-color:var(--dim) transparent;
+}
+.lang-tab {
+  padding:9px 14px;
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  cursor:pointer;border:none;background:transparent;
+  color:var(--muted);white-space:nowrap;
+  border-bottom:2px solid transparent;transition:all 0.15s;
+  letter-spacing:1px;
+}
+.lang-tab:hover{color:var(--text);}
+.lang-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,255,136,0.05);text-shadow:0 0 8px var(--accent);}
+
+.code-header {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 16px;
+  background:linear-gradient(90deg,rgba(0,255,136,0.05),transparent);
+  border-bottom:1px solid var(--border2);
+}
+.code-badge {
+  font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:700;letter-spacing:3px;color:var(--accent4);
+  text-shadow:0 0 8px var(--accent4);
+}
+.copy-btn {
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  padding:4px 12px;cursor:pointer;letter-spacing:1px;
+  text-transform:uppercase;transition:all 0.15s;
+}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+pre {
+  padding:20px;
+  font-family:'Share Tech Mono',monospace;font-size:12px;
+  line-height:2;overflow-x:auto;white-space:pre;min-height:180px;
+}
+
+/* ─── INFO BAR ─── */
+.info-bar {
+  display:none;gap:24px;flex-wrap:wrap;
+  padding:10px 16px;
+  background:rgba(0,255,136,0.03);
+  border-top:1px solid var(--border2);font-size:11px;
+}
+.info-item{display:flex;gap:6px;}
+.info-item .lbl{color:var(--muted);}
+.info-item .val{color:var(--accent);font-weight:700;text-shadow:0 0 6px var(--accent);}
+
+/* ─── MATRIX RAIN (decorative) ─── */
+.matrix-side {
+  position:fixed;top:0;width:40px;height:100vh;
+  overflow:hidden;z-index:0;pointer-events:none;opacity:0.15;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--accent);line-height:1.2;
+}
+.matrix-side.left{left:0;}
+.matrix-side.right{right:0;}
+
+/* ─── SYNTAX ─── */
+.kw{color:#cc88ff;} .fn{color:#00ff88;} .str{color:#ffcc00;}
+.num{color:#ff8800;} .cmt{color:#1a4a2a;font-style:italic;}
+.var{color:#66ccff;} .cls{color:#44ffaa;} .dec{color:#ff6688;}
+
+/* ─── FOOTER ─── */
+footer {
+  text-align:center;color:var(--muted);
+  font-size:11px;margin-top:40px;
+  font-family:'VT323',monospace;letter-spacing:3px;font-size:14px;
+  opacity:0.5;
+}
+
+/* ─── CICADA SIGIL ─── */
+.sigil {
+  position:fixed;bottom:20px;right:20px;
+  opacity:0.08;width:120px;height:120px;
+  animation:sigilPulse 6s ease-in-out infinite;
+  pointer-events:none;z-index:0;
+}
+@keyframes sigilPulse { 0%,100%{opacity:0.04;} 50%{opacity:0.12;} }
+
+/* ─── GLITCH TEXT ─── */
+.glitch {
+  position:relative;
+  animation:glitch 4s infinite;
+}
+@keyframes glitch {
+  0%,95%,100%{transform:translate(0);}
+  96%{transform:translate(-2px,1px);}
+  97%{transform:translate(2px,-1px);}
+  98%{transform:translate(-1px,2px);}
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--dim);}
+::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-pulse"></div>
+
+<!-- Matrix side decorations -->
+<div class="matrix-side left" id="matrixL"></div>
+<div class="matrix-side right" id="matrixR"></div>
+
+<!-- Cicada sigil watermark -->
+<svg class="sigil" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="95" stroke="#00ff88" stroke-width="1"/>
+  <circle cx="100" cy="100" r="70" stroke="#00ff88" stroke-width="0.5"/>
+  <circle cx="100" cy="100" r="45" stroke="#00ff88" stroke-width="0.5"/>
+  <polygon points="100,10 190,155 10,155" stroke="#00ff88" stroke-width="0.5" fill="none"/>
+  <polygon points="100,190 10,45 190,45" stroke="#00ff88" stroke-width="0.5" fill="none"/>
+  <circle cx="100" cy="100" r="8" fill="#00ff88" opacity="0.5"/>
+  <line x1="100" y1="5" x2="100" y2="195" stroke="#00ff88" stroke-width="0.3" opacity="0.5"/>
+  <line x1="5" y1="100" x2="195" y2="100" stroke="#00ff88" stroke-width="0.3" opacity="0.5"/>
+</svg>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="cicada-eye">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="48" stroke="#00ff88" stroke-width="1" opacity="0.6"/>
+        <circle cx="50" cy="50" r="36" stroke="#00ff88" stroke-width="0.5" opacity="0.4"/>
+        <circle cx="50" cy="50" r="24" stroke="#00ff88" stroke-width="0.5" opacity="0.3"/>
+        <polygon points="50,4 96,78 4,78" stroke="#00ff88" stroke-width="1" fill="none"/>
+        <polygon points="50,96 4,22 96,22" stroke="#00ff88" stroke-width="0.5" fill="none" opacity="0.6"/>
+        <circle cx="50" cy="50" r="5" fill="#00ff88" opacity="0.8" style="filter:drop-shadow(0 0 6px #00ff88)"/>
+        <text x="50" y="54" text-anchor="middle" fill="#00ff88" font-size="6" font-family="Share Tech Mono" opacity="0.8">3301</text>
+      </svg>
+    </div>
+    <div class="sys-tag">[ SISTEMA DE CIFRADO AVANZADO · NIVEL 5 ]</div>
+    <h1 class="glitch">CRYPTLAB</h1>
+    <div class="subtitle">3 3 0 1 · P R O T O C O L O · A C T I V O</div>
+    <div class="header-line"></div>
+    <div style="font-size:11px;letter-spacing:2px;color:var(--muted);">
+      LIBER PRIMUS · CICADA · WELCOME · PILGRIM
+    </div>
+  </header>
+
+  <!-- INPUT / OUTPUT -->
+  <div class="main-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-id">▸ INPUT.STREAM</span>
+        <div class="panel-status"><div class="status-dot"></div>READY</div>
+      </div>
+      <textarea id="inputText" placeholder="// Introduce tu mensaje aquí...&#10;// El sistema aguarda...&#10;// PILGRIM, ¿qué tienes que ocultar?"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-id">▸ OUTPUT.CIPHER</span>
+        <div class="panel-status"><div class="status-dot" style="background:var(--accent3);box-shadow:0 0 6px var(--accent3);animation-delay:1s"></div>ENCRYPTED</div>
+      </div>
+      <textarea id="outputText" placeholder="// Resultado del cifrado..." readonly></textarea>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="ctrl-label">◈ PARÁMETROS DE CIFRADO</div>
+    <div class="ctrls-row">
+      <div class="field">
+        <label>▸ Algoritmo</label>
+        <select id="algorithm" onchange="updateDesc()">
+          <optgroup label="── Clásicos ──">
+            <option value="caesar">Caesar Cipher</option>
+            <option value="rot13">ROT13</option>
+            <option value="atbash">Atbash</option>
+            <option value="vigenere">Vigenère</option>
+          </optgroup>
+          <optgroup label="── Digital ──">
+            <option value="base64">Base64</option>
+            <option value="xor">XOR Cipher</option>
+            <option value="hex">Hexadecimal</option>
+            <option value="binary">Binario</option>
+            <option value="ascii">ASCII / Unicode</option>
+          </optgroup>
+          <optgroup label="── Especiales ──">
+            <option value="morse">Código Morse</option>
+            <option value="hebrew">Cifrado Hebreo</option>
+            <option value="cicada">Cicada Cipher ★</option>
+            <option value="reverse">Invertido</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field" id="keyWrap">
+        <label>▸ Clave</label>
+        <input type="text" id="keyInput" value="3" placeholder="Número o palabra clave">
+      </div>
+      <div class="field">
+        <label>▸ Modo</label>
+        <select id="mode">
+          <option value="encrypt">🔒 ENCRIPTAR</option>
+          <option value="decrypt">🔓 DESENCRIPTAR</option>
+        </select>
+      </div>
+    </div>
+    <div class="algo-desc" id="algoDesc"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runCrypto()">⚡ EJECUTAR</button>
+      <button class="btn btn-detect" onclick="detectLanguage()">◎ DETECTAR CIFRADO</button>
+      <button class="btn btn-secondary" onclick="swapTexts()">⇅ INTERCAMBIAR</button>
+      <button class="btn btn-secondary" onclick="clearAll()">✕ LIMPIAR</button>
+    </div>
+    <div class="detect-result" id="detectResult">
+      <div class="detect-title">▸ ANÁLISIS DE CIFRADO</div>
+      <div id="detectBody"></div>
+    </div>
+  </div>
+
+  <!-- CODE OUTPUT -->
+  <div class="lang-panel">
+    <div class="lang-tabs" id="langTabs"></div>
+    <div class="code-header">
+      <span class="code-badge" id="codeBadge">SELECT LANGUAGE</span>
+      <button class="copy-btn" onclick="copyCode()">[ COPY ]</button>
+    </div>
+    <pre id="codeOutput"><span class="cmt">// SISTEMA EN ESPERA...
+// Introduce un mensaje y ejecuta el cifrado
+// para generar el código en tu lenguaje preferido.
+//
+// "3301 welcomes you, pilgrim."</span></pre>
+    <div class="info-bar" id="infoBar">
+      <div class="info-item"><span class="lbl">ALGO:</span><span class="val" id="iAlgo"></span></div>
+      <div class="info-item"><span class="lbl">IN:</span><span class="val" id="iIn"></span></div>
+      <div class="info-item"><span class="lbl">OUT:</span><span class="val" id="iOut"></span></div>
+      <div class="info-item"><span class="lbl">RATIO:</span><span class="val" id="iRatio"></span></div>
+      <div class="info-item"><span class="lbl">ENTROPY:</span><span class="val" id="iEntropy"></span></div>
+    </div>
+  </div>
+
+  <footer>
+    ᛝ · CRYPTLAB 3301 · LIBER PRIMUS · SOLO FINES EDUCATIVOS · ᛝ<br>
+    "WELCOME. FIND THE ANSWER, PILGRIM."
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  MATRIX RAIN (decorativo)
+// ═══════════════════════════════════════════════════════
+(function(){
+  var chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノАБВГДЕЖЗИ3301ΨΩΑΒΓΔΕΖΗΘ';
+  function fill(el){
+    var lines = Math.floor(window.innerHeight/12);
+    var html='';
+    for(var i=0;i<lines;i++) html+=chars[Math.floor(Math.random()*chars.length)]+'<br>';
+    el.innerHTML=html;
+  }
+  var L=document.getElementById('matrixL'), R=document.getElementById('matrixR');
+  fill(L);fill(R);
+  setInterval(function(){fill(L);fill(R);},150);
+})();
+
+// ═══════════════════════════════════════════════════════
+//  ALGORITMOS
+// ═══════════════════════════════════════════════════════
+
+function caesarShift(text,shift){
+  shift=((shift%26)+26)%26;
+  var r='';
+  for(var i=0;i<text.length;i++){
+    var code=text.charCodeAt(i);
+    if(code>=97&&code<=122) r+=String.fromCharCode((code-97+shift)%26+97);
+    else if(code>=65&&code<=90) r+=String.fromCharCode((code-65+shift)%26+65);
+    else r+=text[i];
+  }
+  return r;
+}
+
+function b64enc(t){try{return btoa(unescape(encodeURIComponent(t)));}catch(e){return 'Error: '+e.message;}}
+function b64dec(t){try{return decodeURIComponent(escape(atob(t.trim())));}catch(e){return 'Error: Base64 inválido';}}
+function rot13(t){return caesarShift(t,13);}
+
+function atbash(t){
+  var r='';
+  for(var i=0;i<t.length;i++){
+    var c=t.charCodeAt(i);
+    if(c>=97&&c<=122) r+=String.fromCharCode(122-(c-97));
+    else if(c>=65&&c<=90) r+=String.fromCharCode(90-(c-65));
+    else r+=t[i];
+  }
+  return r;
+}
+
+function vigenere(text,key,enc){
+  key=key.toLowerCase().replace(/[^a-z]/g,'')||'clave';
+  var r='',j=0;
+  for(var i=0;i<text.length;i++){
+    var c=text.charCodeAt(i),isL=c>=97&&c<=122,isU=c>=65&&c<=90;
+    if(isL||isU){
+      var base=isL?97:65,s=key.charCodeAt(j%key.length)-97;
+      r+=String.fromCharCode((c-base+(enc?s:26-s))%26+base);j++;
+    } else r+=text[i];
+  }
+  return r;
+}
+
+function xorCipher(text,key){
+  var k=parseInt(key)||42,r='';
+  for(var i=0;i<text.length;i++) r+=String.fromCharCode(text.charCodeAt(i)^k);
+  return r;
+}
+
+var MC={a:'.-',b:'-...',c:'-.-.',d:'-..',e:'.',f:'..-.',g:'--.',h:'....',i:'..',j:'.---',
+  k:'-.-',l:'.-..',m:'--',n:'-.',o:'---',p:'.--.',q:'--.-',r:'.-.',s:'...',t:'-',
+  u:'..-',v:'...-',w:'.--',x:'-..-',y:'-.--',z:'--..',
+  '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....','6':'-....',
+  '7':'--...','8':'---..',  '9':'----.',' ':'/'};
+var MCR={};Object.keys(MC).forEach(function(k){MCR[MC[k]]=k;});
+function morseEnc(t){return t.toLowerCase().split('').map(function(c){return MC[c]||'?';}).join(' ');}
+function morseDec(t){return t.trim().split(' / ').map(function(w){return w.split(' ').map(function(c){return MCR[c]||'?';}).join('');}).join(' ');}
+
+function binEnc(t){return t.split('').map(function(c){return c.charCodeAt(0).toString(2).padStart(8,'0');}).join(' ');}
+function binDec(t){try{return t.trim().split(' ').map(function(b){return String.fromCharCode(parseInt(b,2));}).join('');}catch(e){return 'Error';}}
+
+function hexEnc(t){return t.split('').map(function(c){return c.charCodeAt(0).toString(16).padStart(2,'0');}).join('');}
+function hexDec(t){try{return(t.trim().match(/.{1,2}/g)||[]).map(function(h){return String.fromCharCode(parseInt(h,16));}).join('');}catch(e){return 'Error';}}
+
+function asciiEnc(t){return t.split('').map(function(c){return c.charCodeAt(0);}).join(' ');}
+function asciiDec(t){try{return t.trim().split(/\s+/).map(function(n){return String.fromCodePoint(parseInt(n));}).join('');}catch(e){return 'Error';}  }
+
+// Hebreo
+var HEB=['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת','ך','ם','ן','ף'];
+var LAT='abcdefghijklmnopqrstuvwxyz'.split('');
+var HEB2LAT={};HEB.forEach(function(h,i){HEB2LAT[h]=LAT[i];});
+function hebrewEnc(t){return t.split('').map(function(c){var i=LAT.indexOf(c.toLowerCase());return i>=0?HEB[i]:c;}).join('');}
+function hebrewDec(t){return t.split('').map(function(c){return HEB2LAT[c]!==undefined?HEB2LAT[c]:c;}).join('');}
+
+// ─── CICADA CIPHER ───────────────────────────────────────────────────────────
+// Basado en las técnicas reales de Cicada 3301:
+// 1) Primero aplica un cifrado Vigenère con la clave dada
+// 2) Luego convierte a una mezcla de Unicode especial (Latin Extended + Simbolos)
+// 3) El resultado parece texto corrupto o de múltiple encoding
+//    (exactamente como el texto de la imagen)
+var CICADA_MAP = [
+  '\u00ed','\u00e4','\u0105','\u00e2','\u0101','\u00e3','\u0118','\u00f3','\u00df','\u00c7',
+  '\u00da','\u00f8','\u00f9','\u00fb','\u00fc','\u00fd','\u00fe','\u00e6','\u00e7','\u00e8',
+  '\u00e9','\u00ea','\u00eb','\u00ec','\u00ee','\u00ef'
+];
+var CICADA_REV={};CICADA_MAP.forEach(function(ch,i){CICADA_REV[ch]=i;});
+
+// Símbolos especiales para no-letras (como en la imagen)
+var SYM_POOL=['§','¶','†','‡','•','◊','∞','≈','∆','Ω','µ','∑','∏','π','√','∫','≤','≥','÷','×','¬','¦','°','±','¿','¡'];
+
+function cicadaEnc(text, key){
+  // Paso 1: Vigenère
+  var vig = vigenere(text, key||'3301', true);
+  // Paso 2: Sustituir letras por caracteres Unicode especiales
+  var r='';
+  var symI=0;
+  for(var i=0;i<vig.length;i++){
+    var c=vig[i], code=vig.charCodeAt(i);
+    if(code>=97&&code<=122){ r+=CICADA_MAP[code-97]; }
+    else if(code>=65&&code<=90){ r+=CICADA_MAP[code-65].toUpperCase(); }
+    else if(c===' '){ r+=' '; }
+    else {
+      // Símbolos y números → pool de símbolos especiales
+      r+=SYM_POOL[symI%SYM_POOL.length];symI++;
+    }
+  }
+  return r;
+}
+
+function cicadaDec(text, key){
+  // Paso 1: Revertir sustitución
+  var r='';
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    var lo=c.toLowerCase();
+    if(CICADA_REV[lo]!==undefined){
+      var idx=CICADA_REV[lo];
+      var letter=String.fromCharCode(idx+97);
+      // Preservar mayúscula si el original era mayúscula (aproximado)
+      r+=letter;
+    } else if(c===' '){ r+=' '; }
+    else { r+='?'; }
+  }
+  // Paso 2: Des-Vigenère
+  return vigenere(r, key||'3301', false);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DETECTOR DE CIFRADO
+// ═══════════════════════════════════════════════════════
+function detectLanguage(){
+  var text=document.getElementById('inputText').value.trim();
+  if(!text){alert('Introduce texto para analizar.');return;}
+
+  var results=[];
+  var scores={};
+
+  // ── Base64 ──
+  if(/^[A-Za-z0-9+/]+=*$/.test(text.replace(/\s/g,''))&&text.length%4===0){
+    scores.base64=(scores.base64||0)+80;
+    results.push({name:'Base64',conf:80,desc:'Patrón de caracteres A-Z a-z 0-9 +/ con padding = al final.'});
+  }
+
+  // ── Binario ──
+  if(/^[01\s]+$/.test(text)&&text.trim().split(/\s+/).every(function(b){return b.length===8;})){
+    scores.binary=95;
+    results.push({name:'Binario (8-bit)',conf:95,desc:'Grupos de 8 dígitos binarios (0 y 1).'});
+  }
+
+  // ── Morse ──
+  if(/^[.\-\/\s]+$/.test(text)){
+    scores.morse=90;
+    results.push({name:'Código Morse',conf:90,desc:'Solo contiene puntos (.), rayas (-) y separadores (/).'});
+  }
+
+  // ── Hexadecimal ──
+  if(/^[0-9a-fA-F\s]+$/.test(text)&&text.replace(/\s/g,'').length%2===0&&!/^[0-9]+$/.test(text)){
+    scores.hex=85;
+    results.push({name:'Hexadecimal',conf:85,desc:'Solo dígitos hex (0-9, A-F) en pares.'});
+  }
+
+  // ── Solo números → ASCII ──
+  if(/^[\d\s]+$/.test(text)){
+    var nums=text.trim().split(/\s+/).map(Number);
+    var allAscii=nums.every(function(n){return n>=32&&n<=126;});
+    if(allAscii){scores.ascii=88;results.push({name:'ASCII Decimal',conf:88,desc:'Secuencia de números decimales en el rango ASCII imprimible (32–126).'});}
+  }
+
+  // ── Hebreo ──
+  var hebCount=text.split('').filter(function(c){return c>='א'&&c<='ת';}).length;
+  if(hebCount>2){
+    var conf=Math.min(95,Math.round((hebCount/text.length)*100)+40);
+    scores.hebrew=conf;results.push({name:'Cifrado Hebreo',conf:conf,desc:'Contiene '+hebCount+' caracteres del alfabeto hebreo (Alefbet).'});
+  }
+
+  // ── Cicada / Unicode corrupto ──
+  var cicadaCount=text.split('').filter(function(c){return CICADA_REV[c.toLowerCase()]!==undefined;}).length;
+  var specialCount=text.split('').filter(function(c){return c.charCodeAt(0)>127&&c.charCodeAt(0)<600;}).length;
+  if(specialCount>3||cicadaCount>2){
+    var cconf=Math.min(90,Math.round((specialCount/text.length)*100)+30);
+    scores.cicada=cconf;results.push({name:'Cicada Cipher / Latin Extended',conf:cconf,desc:'Alta densidad de caracteres Latin-Extended y Unicode especial (U+00C0–U+02FF). Estilo Cicada 3301 / Liber Primus.'});
+  }
+
+  // ── ROT13 ──
+  var lettersOnly=text.replace(/[^a-zA-Z]/g,'');
+  if(lettersOnly.length>5){
+    var freq={};
+    for(var i=0;i<lettersOnly.length;i++){var l=lettersOnly[i].toLowerCase();freq[l]=(freq[l]||0)+1;}
+    // Si la letra más común no es E,T,A,O,I (podría estar ROT13d)
+    var topLetter=Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];})[0];
+    if(['r','s','n','v','f'].includes(topLetter)){
+      scores.rot13=60;results.push({name:'ROT13 (probable)',conf:60,desc:'Distribución de frecuencia de letras sugiere desplazamiento de 13 posiciones.'});
+    }
+  }
+
+  // ── Caesar ──
+  if(lettersOnly.length>5&&!scores.rot13){
+    scores.caesar=45;results.push({name:'Caesar Cipher (posible)',conf:45,desc:'Texto solo con letras latinas. Puede ser un cifrado por desplazamiento.'});
+  }
+
+  // ── Texto plano ──
+  var commonWords=['the','and','que','para','con','una','los','las','del'];
+  var words=text.toLowerCase().split(/\s+/);
+  var plainCount=words.filter(function(w){return commonWords.includes(w);}).length;
+  if(plainCount>=2){scores.plain=90;results.push({name:'Texto Plano',conf:90,desc:'Contiene '+plainCount+' palabras comunes en español/inglés. El texto podría no estar cifrado.'});}
+
+  // Ordenar por confianza
+  results.sort(function(a,b){return b.conf-a.conf;});
+
+  var box=document.getElementById('detectResult');
+  var body=document.getElementById('detectBody');
+  box.style.display='block';
+
+  if(results.length===0){
+    body.innerHTML='<span style="color:var(--muted)">No se pudo identificar el algoritmo con certeza. El texto puede usar un cifrado desconocido o custom.</span>';
+    return;
+  }
+
+  var html='';
+  results.forEach(function(r){
+    var bar=Math.round(r.conf);
+    var col=r.conf>=75?'var(--accent)':r.conf>=50?'var(--accent4)':'var(--accent3)';
+    html+='<div style="margin-bottom:10px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+    html+='<span class="detect-tag">'+r.name+'</span>';
+    html+='<span style="color:'+col+';font-size:11px;font-family:Orbitron,monospace;">'+bar+'%</span>';
+    html+='</div>';
+    html+='<div style="background:rgba(255,102,0,0.08);height:3px;border-radius:2px;">';
+    html+='<div style="background:'+col+';height:100%;width:'+bar+'%;box-shadow:0 0 6px '+col+';transition:width 1s;"></div></div>';
+    html+='<div style="color:#4a5a4a;font-size:11px;margin-top:4px;">'+r.desc+'</div>';
+    html+='</div>';
+  });
+
+  // Sugerencia de acción
+  var best=results[0];
+  var algoMap={'Base64':'base64','Binario (8-bit)':'binary','Código Morse':'morse','Hexadecimal':'hex','ASCII Decimal':'ascii','Cifrado Hebreo':'hebrew','Cicada Cipher / Latin Extended':'cicada','ROT13 (probable)':'rot13','Caesar Cipher (posible)':'caesar'};
+  if(algoMap[best.name]){
+    html+='<div style="margin-top:12px;padding:8px 12px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);font-size:11px;color:var(--accent);">';
+    html+='▸ SUGERENCIA: Seleccionar <strong>'+best.name+'</strong> y modo DESENCRIPTAR';
+    html+=' <button onclick="document.getElementById(\'algorithm\').value=\''+algoMap[best.name]+'\';document.getElementById(\'mode\').value=\'decrypt\';updateDesc();" style="margin-left:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:Share Tech Mono,monospace;font-size:10px;padding:3px 8px;cursor:pointer;">APLICAR</button>';
+    html+='</div>';
+  }
+
+  body.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════
+//  RUN CRYPTO
+// ═══════════════════════════════════════════════════════
+function runCrypto(){
+  var text=document.getElementById('inputText').value;
+  var algo=document.getElementById('algorithm').value;
+  var key=document.getElementById('keyInput').value.trim();
+  var enc=document.getElementById('mode').value==='encrypt';
+  var shift=((parseInt(key)||3)%26+26)%26;
+
+  if(!text){alert('// ERROR: Input stream vacío.');return;}
+
+  var result;
+  switch(algo){
+    case 'caesar':  result=caesarShift(text,enc?shift:26-shift);break;
+    case 'base64':  result=enc?b64enc(text):b64dec(text);break;
+    case 'rot13':   result=rot13(text);break;
+    case 'atbash':  result=atbash(text);break;
+    case 'vigenere':result=vigenere(text,key,enc);break;
+    case 'xor':     result=xorCipher(text,key);break;
+    case 'morse':   result=enc?morseEnc(text):morseDec(text);break;
+    case 'binary':  result=enc?binEnc(text):binDec(text);break;
+    case 'hex':     result=enc?hexEnc(text):hexDec(text);break;
+    case 'ascii':   result=enc?asciiEnc(text):asciiDec(text);break;
+    case 'hebrew':  result=enc?hebrewEnc(text):hebrewDec(text);break;
+    case 'cicada':  result=enc?cicadaEnc(text,key):cicadaDec(text,key);break;
+    case 'reverse': result=text.split('').reverse().join('');break;
+    default:        result='// ERROR: Algoritmo desconocido.';
+  }
+
+  document.getElementById('outputText').value=result;
+
+  // Info bar
+  var bar=document.getElementById('infoBar');bar.style.display='flex';
+  document.getElementById('iAlgo').textContent=algo.toUpperCase();
+  document.getElementById('iIn').textContent=text.length+' chars';
+  document.getElementById('iOut').textContent=result.length+' chars';
+  document.getElementById('iRatio').textContent=text.length?(result.length/text.length).toFixed(2)+'x':'—';
+  // Entropía simple (bits por carácter)
+  var freq={};for(var i=0;i<result.length;i++){var ch=result[i];freq[ch]=(freq[ch]||0)+1;}
+  var entropy=0;var len=result.length;
+  Object.keys(freq).forEach(function(ch){var p=freq[ch]/len;entropy-=p*Math.log2(p);});
+  document.getElementById('iEntropy').textContent=entropy.toFixed(2)+' bits/char';
+
+  generateCode(text,result,algo,key,enc);
+}
+
+// ═══════════════════════════════════════════════════════
+//  LANGUAGE TABS
+// ═══════════════════════════════════════════════════════
+var LANGS=[
+  {id:'python',label:'🐍 Python'},{id:'js',label:'JS'},{id:'ts',label:'TS'},
+  {id:'java',label:'☕ Java'},{id:'csharp',label:'C#'},{id:'cpp',label:'C++'},
+  {id:'go',label:'🐹 Go'},{id:'rust',label:'🦀 Rust'},{id:'ruby',label:'💎 Ruby'},
+  {id:'php',label:'🐘 PHP'},{id:'swift',label:'Swift'},{id:'kotlin',label:'Kotlin'},
+  {id:'r',label:'📊 R'},{id:'lua',label:'🌙 Lua'},{id:'bash',label:'Bash'}
+];
+var currentLang='python',lastCall=null;
+
+function buildTabs(){
+  var c=document.getElementById('langTabs');c.innerHTML='';
+  LANGS.forEach(function(l){
+    var b=document.createElement('button');
+    b.className='lang-tab'+(l.id===currentLang?' active':'');
+    b.textContent=l.label;
+    b.onclick=(function(id){return function(){currentLang=id;buildTabs();if(lastCall)generateCode.apply(null,lastCall);};})(l.id);
+    c.appendChild(b);
+  });
+  var active=LANGS.find(function(l){return l.id===currentLang;});
+  document.getElementById('codeBadge').textContent=active?'[ '+active.label.replace(/^.\s/,'')+' ]':'';
+}
+
+// ─── syntax helpers ───
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
+function S(s){return '<span class="str">'+s+'</span>';}
+function K(s){return '<span class="kw">'+s+'</span>';}
+function F(s){return '<span class="fn">'+s+'</span>';}
+function N(s){return '<span class="num">'+s+'</span>';}
+function V(s){return '<span class="var">'+s+'</span>';}
+function C(s){return '<span class="cls">'+s+'</span>';}
+function CM(s){return '<span class="cmt">'+s+'</span>';}
+function D(s){return '<span class="dec">'+s+'</span>';}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+function generateCode(input,output,algo,key,enc){
+  lastCall=[input,output,algo,key,enc];
+  var si=esc(input.substring(0,50))+(input.length>50?'...':'');
+  var so=esc(output.substring(0,50))+(output.length>50?'...':'');
+  var sk=esc(key||'3');
+  var fn=enc?'encrypt':'decrypt';
+  var shift=((parseInt(key)||3)%26+26)%26;
+  if(!enc) shift=(26-shift)%26;
+
+  var generators={
+    python:pyCode,js:jsCode,ts:tsCode,java:javaCode,csharp:csCode,
+    cpp:cppCode,go:goCode,rust:rustCode,ruby:rubyCode,php:phpCode,
+    swift:swiftCode,kotlin:kotlinCode,r:rCode,lua:luaCode,bash:bashCode
+  };
+  var gen=generators[currentLang];
+  document.getElementById('codeOutput').innerHTML=gen?gen(algo,si,so,sk,enc,fn,shift):CM('// No disponible');
+}
+
+// ═══════════════════════════════════════════════════════
+//  CODE GENERATORS
+// ═══════════════════════════════════════════════════════
+
+// ── Python ──
+function pyCode(algo,si,so,sk,enc,fn,shift){
+  var p={
+    caesar:K('def')+' '+F(fn+'_caesar')+'('+V('text')+', '+V('shift')+'='+N(shift)+'):\n'+
+      '    '+V('r')+' = '+S("''")+'\n    '+K('for')+' '+V('c')+' '+K('in')+' '+V('text')+':\n'+
+      '        '+K('if')+' '+V('c')+'.'+ F('islower')+'(): '+V('r')+' += '+C('chr')+'(('+C('ord')+'('+V('c')+')-'+N(97)+'+'+V('shift')+')%'+N(26)+'+'+N(97)+')\n'+
+      '        '+K('elif')+' '+V('c')+'.'+F('isupper')+'(): '+V('r')+' += '+C('chr')+'(('+C('ord')+'('+V('c')+')-'+N(65)+'+'+V('shift')+')%'+N(26)+'+'+N(65)+')\n'+
+      '        '+K('else')+': '+V('r')+' += '+V('c')+'\n    '+K('return')+' '+V('r')+'\n\n'+
+      F('print')+'('+F(fn+'_caesar')+'('+S("'"+si+"'")+', '+N(shift)+'))  '+CM('# → '+so),
+
+    base64:K('import')+' base64\n'+V('t')+' = '+S("'"+si+"'")+'\n'+
+      (enc?V('r')+' = base64.'+F('b64encode')+'('+V('t')+'.'+F('encode')+'()).'+F('decode')+'()'
+          :V('r')+' = base64.'+F('b64decode')+'('+V('t')+').'+F('decode')+'()')+'\n'+
+      F('print')+'('+V('r')+')  '+CM('# → '+so),
+
+    rot13:K('import')+' codecs\n'+F('print')+'(codecs.'+F('encode')+'('+S("'"+si+"'")+', '+S("'rot_13'")+'))  '+CM('# → '+so),
+
+    atbash:K('def')+' '+F('atbash')+'('+V('t')+'):\n'+
+      '    '+K('return')+' '+S("''")+'.'+F('join')+'('+C('chr')+'('+N(122)+'-('+C('ord')+'('+V('c')+')-'+N(97)+')) '+K('if')+' '+V('c')+'.'+ F('islower')+'()\n'+
+      '        '+K('else')+' '+C('chr')+'('+N(90)+'-('+C('ord')+'('+V('c')+')-'+N(65)+')) '+K('if')+' '+V('c')+'.'+F('isupper')+'() '+K('else')+' '+V('c')+' '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')\n'+
+      F('print')+'('+F('atbash')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    vigenere:K('def')+' '+F(fn+'_vigenere')+'('+V('t')+', '+V('k')+'):\n'+
+      '    '+V('k')+' = '+V('k')+'.'+ F('lower')+'(); '+V('r')+' = '+S("''")+'; '+V('j')+' = '+N(0)+'\n'+
+      '    '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+':\n'+
+      '        '+K('if')+' '+V('c')+'.'+ F('isalpha')+'():\n'+
+      '            '+V('b')+' = '+N(97)+' '+K('if')+' '+V('c')+'.'+ F('islower')+'() '+K('else')+' '+N(65)+'\n'+
+      '            '+V('s')+' = '+C('ord')+'('+V('k')+'['+V('j')+'%'+C('len')+'('+V('k')+')])-'+N(97)+'\n'+
+      '            '+V('r')+' += '+C('chr')+'(('+C('ord')+'('+V('c')+')-'+V('b')+(enc?'+':'-')+V('s')+'+'+N(26)+')%'+N(26)+'+'+V('b')+'); '+V('j')+'+='+N(1)+'\n'+
+      '        '+K('else')+': '+V('r')+'+='+V('c')+'\n    '+K('return')+' '+V('r')+'\n'+
+      F('print')+'('+F(fn+'_vigenere')+'('+S("'"+si+"'")+', '+S("'"+sk+"'")+'))  '+CM('# → '+so),
+
+    xor:K('def')+' '+F('xor_cipher')+'('+V('t')+', '+V('k')+'='+N(parseInt(sk)||42)+'):\n'+
+      '    '+K('return')+' '+S("''")+'.'+F('join')+'('+C('chr')+'('+C('ord')+'('+V('c')+')+'+V('k')+') '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')\n'+
+      F('print')+'('+F('xor_cipher')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    hex:K('def')+' '+F(fn+'_hex')+'('+V('t')+'):\n'+
+      '    '+(enc?K('return')+' '+V('t')+'.'+F('encode')+'().'+F('hex')+'()':K('return')+' '+C('bytes')+'.'+F('fromhex')+'('+V('t')+').'+F('decode')+'()')+'\n'+
+      F('print')+'('+F(fn+'_hex')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    binary:K('def')+' '+F(fn+'_bin')+'('+V('t')+'):\n'+
+      '    '+(enc?K('return')+' '+S("' '")+'.'+F('join')+'('+C('format')+'('+C('ord')+'('+V('c')+'),'+S("'08b'")+') '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')':K('return')+' '+S("''")+'.'+F('join')+'('+C('chr')+'('+C('int')+'('+V('b')+','+N(2)+')) '+K('for')+' '+V('b')+' '+K('in')+' '+V('t')+'.'+F('split')+'())')+'\n'+
+      F('print')+'('+F(fn+'_bin')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    ascii:K('def')+' '+F(fn+'_ascii')+'('+V('t')+'):\n'+
+      '    '+(enc?K('return')+' '+S("' '")+'.'+F('join')+'('+C('str')+'('+C('ord')+'('+V('c')+')) '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')':K('return')+' '+S("''")+'.'+F('join')+'('+C('chr')+'('+C('int')+'('+V('n')+')) '+K('for')+' '+V('n')+' '+K('in')+' '+V('t')+'.'+F('split')+'())')+'\n'+
+      F('print')+'('+F(fn+'_ascii')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    hebrew:CM('# Alefbet hebreo completo')+'\n'+
+      V('HEB')+' = '+S("'אבגדהוזחטיכלמנסעפצקרשתךםןף'")+'  '+CM('# 26 letras')+'\n'+
+      V('LAT')+' = '+S("'abcdefghijklmnopqrstuvwxyz'")+'\n\n'+
+      K('def')+' '+F('to_hebrew')+'('+V('t')+'):\n'+
+      '    '+K('return')+' '+S("''")+'.'+F('join')+'('+V('HEB')+'['+V('LAT')+'.'+F('index')+'('+V('c')+'.'+ F('lower')+'())] '+K('if')+' '+V('c')+'.'+ F('lower')+'() '+K('in')+' '+V('LAT')+' '+K('else')+' '+V('c')+' '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')\n\n'+
+      K('def')+' '+F('from_hebrew')+'('+V('t')+'):\n'+
+      '    '+V('d')+' = '+C('dict')+'('+C('zip')+'('+V('HEB')+', '+V('LAT')+'))\n'+
+      '    '+K('return')+' '+S("''")+'.'+F('join')+'('+V('d')+'.'+F('get')+'('+V('c')+','+V('c')+') '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')\n\n'+
+      F('print')+'('+F(enc?'to_hebrew':'from_hebrew')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    morse:V('MORSE')+' = {'+S("'a'")+':'+S("'.-'")+', '+S("'b'")+':'+S("'-...'")+', '+CM('...')+' }\n'+
+      K('def')+' '+F('to_morse')+'('+V('t')+'):\n'+
+      '    '+K('return')+' '+S("' '")+'.'+F('join')+'('+V('MORSE')+'.'+F('get')+'('+V('c')+'.'+ F('lower')+'(),'+S("'?'")+') '+K('for')+' '+V('c')+' '+K('in')+' '+V('t')+')\n'+
+      F('print')+'('+F('to_morse')+'('+S("'"+si+"'")+'))  '+CM('# → '+so),
+
+    cicada:CM('# Cicada Cipher = Vigenère + sustitución Unicode Latin-Extended')+'\n'+
+      V('CMAP')+' = ['+S("'í'")+','+S("'ä'")+','+S("'ą'")+', '+CM('... 26 chars Unicode special ...')+' ]\n\n'+
+      K('def')+' '+F('cicada_enc')+'('+V('t')+', '+V('k')+'='+S("'3301'")+'):\n'+
+      '    '+V('vig')+' = '+F('vigenere_encrypt')+'('+V('t')+', '+V('k')+')  '+CM('# paso 1')+'\n'+
+      '    '+K('return')+' '+S("''")+'.'+F('join')+'('+V('CMAP')+'['+C('ord')+'('+V('c')+')-'+N(97)+'] '+K('if')+' '+V('c')+'.'+ F('islower')+'() '+K('else')+' '+V('c')+' '+K('for')+' '+V('c')+' '+K('in')+' '+V('vig')+')\n\n'+
+      F('print')+'('+F('cicada_enc')+'('+S("'"+si+"'")+', '+S("'"+sk+"'")+'))  '+CM('# → '+so),
+
+    reverse:F('print')+'('+S("'"+si+"'")+' [::-'+N(1)+'])  '+CM('# → '+so),
+  };
+  return p[algo]||CM('# No disponible para este algoritmo');
+}
+
+// ── JavaScript ──
+function jsCode(algo,si,so,sk,enc,fn,shift){
+  var jn = ".join('')";
+  var m = {};
+
+  m.caesar = K('const')+' '+F(fn+'Caesar')+' = (t, s='+N(shift)+') => {\n'+
+    '  s=((s%26)+26)%26;\n'+
+    '  return [...t].map(c => {\n'+
+    '    const code=c.charCodeAt(0);\n'+
+    '    if(code>=97&&code<=122) return String.fromCharCode((code-97+s)%26+97);\n'+
+    '    if(code>=65&&code<=90)  return String.fromCharCode((code-65+s)%26+65);\n'+
+    '    return c;\n'+
+    '  })'+jn+';\n};\n\n'+
+    F('console')+'.log('+F(fn+'Caesar')+'('+S("'"+si+"'")+'));';
+
+  m.base64 = enc ?
+    K('const')+' r=Buffer.from('+S("'"+si+"'")+'  ).toString("base64");\n'+F('console')+'.log(r);' :
+    K('const')+' r=Buffer.from('+S("'"+si+"'")+',"base64").toString("utf8");\n'+F('console')+'.log(r);';
+
+  m.rot13 = K('const')+' '+F('rot13')+' = s => s.replace(/[a-zA-Z]/g, c => {\n'+
+    "  const b = c<='Z' ? 65 : 97;\n"+
+    '  return String.fromCharCode((c.charCodeAt(0)-b+13)%26+b);\n'+
+    '});\n'+F('console')+'.log('+F('rot13')+'('+S("'"+si+"'")+'  ));';
+
+  m.atbash = K('const')+' '+F('atbash')+' = t => [...t].map(c => {\n'+
+    '  const v=c.charCodeAt(0);\n'+
+    '  if(v>=97&&v<=122) return String.fromCharCode(122-(v-97));\n'+
+    '  if(v>=65&&v<=90)  return String.fromCharCode(90-(v-65));\n'+
+    '  return c; })'+jn+';\n'+F('console')+'.log('+F('atbash')+'('+S("'"+si+"'")+'  ));';
+
+  m.hex = enc ?
+    K('const')+' '+F('encHex')+' = t => [...t].map(c=>c.charCodeAt(0).toString(16).padStart(2,"0"))'+jn+';\n'+F('console')+'.log('+F('encHex')+'('+S("'"+si+"'")+'  ));' :
+    K('const')+' '+F('decHex')+' = t => t.match(/.{2}/g).map(h=>String.fromCharCode(parseInt(h,16)))'+jn+';\n'+F('console')+'.log('+F('decHex')+'('+S("'"+si+"'")+'  ));';
+
+  m.binary = enc ?
+    K('const')+' '+F('encBin')+' = t => [...t].map(c=>c.charCodeAt(0).toString(2).padStart(8,"0")).join(" ");\n'+F('console')+'.log('+F('encBin')+'('+S("'"+si+"'")+'  ));' :
+    K('const')+' '+F('decBin')+' = t => t.split(" ").map(b=>String.fromCharCode(parseInt(b,2)))'+jn+';\n'+F('console')+'.log('+F('decBin')+'('+S("'"+si+"'")+'  ));';
+
+  m.ascii = enc ?
+    K('const')+' '+F('encAscii')+' = t => [...t].map(c=>c.charCodeAt(0)).join(" ");\n'+F('console')+'.log('+F('encAscii')+'('+S("'"+si+"'")+'  ));' :
+    K('const')+' '+F('decAscii')+' = t => t.trim().split(/\\s+/).map(n=>String.fromCodePoint(+n))'+jn+';\n'+F('console')+'.log('+F('decAscii')+'('+S("'"+si+"'")+'  ));';
+
+  m.vigenere = K('const')+' '+F(fn+'Vig')+' = (t,k) => {\n'+
+    '  k=k.toLowerCase(); let j=0;\n'+
+    '  return [...t].map(c => {\n'+
+    '    const code=c.charCodeAt(0),isL=code>=97&&code<=122,isU=code>=65&&code<=90;\n'+
+    '    if(isL||isU){ const b=isL?97:65, s=k.charCodeAt(j++%k.length)-97;\n'+
+    '      return String.fromCharCode((code-b'+(enc?'+s':'-s')+'+26)%26+b); }\n'+
+    '    return c;\n  })'+jn+';\n};\n'+
+    F('console')+'.log('+F(fn+'Vig')+'('+S("'"+si+"'")+', '+S("'"+sk+"'")+'  ));';
+
+  m.xor = K('const')+' '+F('xor')+' = (t,k='+(parseInt(sk)||42)+') => [...t].map(c=>String.fromCharCode(c.charCodeAt(0)^k))'+jn+';\n'+
+    F('console')+'.log('+F('xor')+'('+S("'"+si+"'")+'  ));';
+
+  m.morse = K('const')+' M={a:".-",b:"-...",c:"-.-.",'+CM('/* ... */')+'};\n'+
+    K('const')+' '+F('toMorse')+' = t => [...t].map(c=>M[c.toLowerCase()]||"?").join(" ");\n'+
+    F('console')+'.log('+F('toMorse')+'('+S("'"+si+"'")+'  ));';
+
+  m.hebrew = K('const')+' HEB=[..."\u05d0\u05d1\u05d2\u05d3\u05d4\u05d5\u05d6\u05d7\u05d8\u05d9\u05db\u05dc\u05de\u05e0\u05e1\u05e2\u05e4\u05e6\u05e7\u05e8\u05e9\u05ea\u05da\u05dd\u05df\u05e3"];\n'+
+    K('const')+' LAT=[..."abcdefghijklmnopqrstuvwxyz"];\n'+
+    K('const')+' toH=t=>[...t].map(c=>{const i=LAT.indexOf(c.toLowerCase());return i>=0?HEB[i]:c;})'+jn+';\n'+
+    K('const')+' frH=t=>[...t].map(c=>{const i=HEB.indexOf(c);return i>=0?LAT[i]:c;})'+jn+';\n'+
+    F('console')+'.log('+(enc?'toH':'frH')+'('+S("'"+si+"'")+'  ));';
+
+  m.cicada = CM('// Cicada Cipher: Vigenere + Unicode Latin-Extended')+'\n'+
+    K('const')+' CMAP=["\u00ed","\u00e4","\u0105","\u00e2","\u0101","\u00e3","\u0118","\u00f3",\n'+
+    '  "\u00df","\u00c7","\u00da","\u00f8","\u00f9","\u00fb","\u00fc","\u00fd",\n'+
+    '  "\u00fe","\u00e6","\u00e7","\u00e8","\u00e9","\u00ea","\u00eb","\u00ec","\u00ee","\u00ef"];\n'+
+    K('const')+' '+F('cicadaEnc')+' = (t, k="3301") => {\n'+
+    '  let vig="",j=0,key=k.toLowerCase();\n'+
+    '  for(const c of t){const code=c.charCodeAt(0),isL=code>=97&&code<=122,isU=code>=65&&code<=90;\n'+
+    '    if(isL||isU){const b=isL?97:65,s=key.charCodeAt(j++%key.length)-97;\n'+
+    '      vig+=String.fromCharCode((code-b+s+26)%26+b);}else vig+=c;}\n'+
+    '  return [...vig].map(c=>{const v=c.charCodeAt(0);\n'+
+    '    if(v>=97&&v<=122)return CMAP[v-97];\n'+
+    '    if(v>=65&&v<=90) return CMAP[v-65];return c;})'+jn+';\n'+
+    '};\n'+F('console')+'.log('+F('cicadaEnc')+'('+S("'"+si+"'")+', '+S("'"+sk+"'")+'  ));';
+
+  m.reverse = F('console')+'.log([...'+S("'"+si+"'")+'  ].reverse()'+jn+');';
+
+  return (m[algo] || CM('// No disponible')) + '\n' + CM('// Output: '+so);
+}
+
+// ── TypeScript ──
+function tsCode(algo,si,so,sk,enc,fn,shift){
+  return CM('// TypeScript — igual que JS con tipos')+'\n'+
+    K('function')+' '+F(fn+cap(algo))+'('+V('text')+': '+C('string')+', '+V('key')+': '+C('string|number')+' = '+S("'"+sk+"'")+'): '+C('string')+' {\n'+
+    '  '+CM('// Implementación idéntica a JavaScript, con tipado estático')+'\n'+
+    '  '+K('return')+' '+CM('/* ver tab JavaScript */')+';\n}\n\n'+
+    F('console')+'.'+F('log')+'('+F(fn+cap(algo))+'('+S("'"+si+"'")+'));  '+CM('// → '+so);
+}
+
+// ── Java ──
+function javaCode(algo,si,so,sk,enc,fn,shift){
+  return K('public class')+' '+C('CryptLab')+' {\n'+
+    '  '+K('public static')+' '+C('String')+' '+F(fn+cap(algo))+'('+C('String')+' '+V('t')+', '+K('int')+' shift) {\n'+
+    '    '+C('StringBuilder')+' sb = '+K('new')+' '+C('StringBuilder')+'();\n'+
+    '    '+K('for')+' ('+K('char')+' c : t.'+F('toCharArray')+'()) {\n'+
+    '      '+K('if')+' ('+C('Character')+'.'+F('isLower')+'(c)) sb.'+F('append')+'(('+K('char')+')((c-'+S("'a'")+'+shift)%26+'+S("'a'")+'));\n'+
+    '      '+K('else if')+' ('+C('Character')+'.'+F('isUpper')+'(c)) sb.'+F('append')+'(('+K('char')+')((c-'+S("'A'")+'+shift)%26+'+S("'A'")+'));\n'+
+    '      '+K('else')+' sb.'+F('append')+'(c);\n    }\n'+
+    '    '+K('return')+' sb.'+F('toString')+'();\n  }\n\n'+
+    '  '+K('public static void')+' '+F('main')+'('+C('String')+'[] args) {\n'+
+    '    '+C('System')+'.out.'+F('println')+'('+F(fn+cap(algo))+'('+S('"'+si+'"')+', '+N(shift)+'));\n'+
+    '    '+CM('// → "'+so+'"')+'\n  }\n}';
+}
+
+// ── C# ──
+function csCode(algo,si,so,sk,enc,fn,shift){
+  return K('using')+' System;\n'+K('class')+' '+C('CryptLab')+' {\n'+
+    '  '+K('static string')+' '+F(cap(fn)+cap(algo))+'('+K('string')+' t, '+K('int')+' shift='+N(shift)+') {\n'+
+    '    '+K('var')+' sb = '+K('new')+' System.Text.'+C('StringBuilder')+'();\n'+
+    '    '+K('foreach')+' ('+K('char')+' c '+K('in')+' t) {\n'+
+    '      '+K('if')+' ('+K('char')+'.'+F('IsLower')+'(c)) sb.'+F('Append')+'(('+K('char')+')((c-'+S("'a'")+'+shift)%26+'+S("'a'")+'));\n'+
+    '      '+K('else if')+' ('+K('char')+'.'+F('IsUpper')+'(c)) sb.'+F('Append')+'(('+K('char')+')((c-'+S("'A'")+'+shift)%26+'+S("'A'")+'));\n'+
+    '      '+K('else')+' sb.'+F('Append')+'(c);\n    }\n    '+K('return')+' sb.'+F('ToString')+'();\n  }\n'+
+    '  '+K('static void')+' '+F('Main')+'() { '+F('Console')+'.'+F('WriteLine')+'('+F(cap(fn)+cap(algo))+'('+S('"'+si+'"')+')); '+CM('// → '+so)+' }\n}';
+}
+
+// ── C++ ──
+function cppCode(algo,si,so,sk,enc,fn,shift){
+  return D('#include')+' &lt;iostream&gt;\n'+D('#include')+' &lt;string&gt;\n'+K('using namespace')+' std;\n\n'+
+    C('string')+' '+F(fn+'_'+algo)+'('+C('string')+' t, '+K('int')+' s='+N(shift)+') {\n'+
+    '  s=((s%26)+26)%26;\n'+
+    '  '+K('for')+' ('+K('auto')+'& c:t) {\n'+
+    '    '+K('if')+' (islower(c)) c=(c-'+S("'a'")+'+s)%26+'+S("'a'")+';\n'+
+    '    '+K('else if')+' (isupper(c)) c=(c-'+S("'A'")+'+s)%26+'+S("'A'")+';\n'+
+    '  }\n  '+K('return')+' t;\n}\n'+
+    K('int')+' main(){cout<<'+F(fn+'_'+algo)+'('+S('"'+si+'"')+')<<endl;'+CM('// → '+so)+' '+K('return')+' 0;}';
+}
+
+// ── Go ──
+function goCode(algo,si,so,sk,enc,fn,shift){
+  return K('package')+' main\nimport '+S('"fmt"')+'\n\n'+
+    K('func')+' '+F(cap(fn)+cap(algo))+'(t '+C('string')+', shift '+C('int')+') '+C('string')+' {\n'+
+    '  runes := []'+C('rune')+'(t)\n'+
+    '  '+K('for')+' i,c := '+K('range')+' runes {\n'+
+    '    '+K('switch')+' {\n'+
+    '    '+K('case')+' c>='+S("'a'")+' && c<='+S("'z'")+': runes[i]=(c-'+S("'a'")+'+rune(shift))%26+'+S("'a'")+'\n'+
+    '    '+K('case')+' c>='+S("'A'")+' && c<='+S("'Z'")+': runes[i]=(c-'+S("'A'")+'+rune(shift))%26+'+S("'A'")+'\n'+
+    '    }\n  }\n  '+K('return')+' '+C('string')+'(runes)\n}\n'+
+    K('func')+' main(){fmt.'+F('Println')+'('+F(cap(fn)+cap(algo))+'('+S('"'+si+'"')+','+N(shift)+'))}  '+CM('// → '+so);
+}
+
+// ── Rust ──
+function rustCode(algo,si,so,sk,enc,fn,shift){
+  return K('fn')+' '+F(fn+'_'+algo)+'(text: &'+C('str')+', shift: '+C('u32')+') -> '+C('String')+' {\n'+
+    '  text.'+F('chars')+'().'+F('map')+'(|c| {\n'+
+    '    let v = c as '+C('u32')+';\n'+
+    '    match v {\n'+
+    '      '+N(97)+'..='+N(122)+' => '+C('char')+'::from_u32((v-'+N(97)+'+shift)%'+N(26)+'+'+N(97)+').unwrap(),\n'+
+    '      '+N(65)+'..='+N(90)+' => '+C('char')+'::from_u32((v-'+N(65)+'+shift)%'+N(26)+'+'+N(65)+').unwrap(),\n'+
+    '      _ => c,\n    }\n  }).'+F('collect')+'()\n}\n'+
+    K('fn')+' main(){println!("{}",'+F(fn+'_'+algo)+'('+S('"'+si+'"')+','+N(shift)+'));} '+CM('// → '+so);
+}
+
+// ── Ruby ──
+function rubyCode(algo,si,so,sk,enc,fn,shift){
+  return K('def')+' '+F(fn+'_'+algo)+'(t, shift='+N(shift)+')\n'+
+    '  t.chars.map { |c|\n'+
+    '    '+K('if')+' c=~/[a-z]/ then ('+S("'a'")+'.ord+(c.ord-'+S("'a'")+'.ord+shift)%26).chr\n'+
+    '    '+K('elsif')+' c=~/[A-Z]/ then ('+S("'A'")+'.ord+(c.ord-'+S("'A'")+'.ord+shift)%26).chr\n'+
+    '    '+K('else')+' c '+K('end')+'\n  }.join\n'+K('end')+'\n'+
+    F('puts')+' '+F(fn+'_'+algo)+'('+S("'"+si+"'")+')  '+CM('# → '+so);
+}
+
+// ── PHP ──
+function phpCode(algo,si,so,sk,enc,fn,shift){
+  return D('&lt;?php')+'\n'+K('function')+' '+F(fn+'_'+algo)+'('+C('string')+' $t, '+C('int')+' $s='+N(shift)+'): '+C('string')+' {\n'+
+    '  $r=""; $s=(($s%26)+26)%26;\n'+
+    '  '+K('foreach')+' (str_split($t) '+K('as')+' $c) {\n'+
+    '    '+K('if')+' (ctype_lower($c)) $r.=chr((ord($c)-97+$s)%26+97);\n'+
+    '    '+K('elseif')+' (ctype_upper($c)) $r.=chr((ord($c)-65+$s)%26+65);\n'+
+    '    '+K('else')+' $r.=$c;\n  }\n  '+K('return')+' $r;\n}\n'+
+    K('echo')+' '+F(fn+'_'+algo)+'('+S("'"+si+"'")+').PHP_EOL;  '+CM('// → '+so);
+}
+
+// ── Swift ──
+function swiftCode(algo,si,so,sk,enc,fn,shift){
+  return K('func')+' '+F(fn+cap(algo))+'(_ t: '+C('String')+', shift: '+C('Int')+'='+N(shift)+') -> '+C('String')+' {\n'+
+    '  let s=((shift%26)+26)%26\n'+
+    '  '+K('return')+' '+C('String')+'(t.unicodeScalars.map { sc in\n'+
+    '    let v=sc.value\n'+
+    '    '+K('if')+' 97...122 ~= v { '+K('return')+' Unicode.Scalar((v-97+UInt32(s))%26+97)! }\n'+
+    '    '+K('if')+' 65...90 ~= v { '+K('return')+' Unicode.Scalar((v-65+UInt32(s))%26+65)! }\n'+
+    '    '+K('return')+' sc\n  })\n}\n'+
+    K('print')+'('+F(fn+cap(algo))+'('+S('"'+si+'"')+'))  '+CM('// → '+so);
+}
+
+// ── Kotlin ──
+function kotlinCode(algo,si,so,sk,enc,fn,shift){
+  return K('fun')+' '+F(fn+cap(algo))+'(t: '+C('String')+', shift: '+C('Int')+'='+N(shift)+'): '+C('String')+' {\n'+
+    '  val s=((shift%26)+26)%26\n'+
+    '  '+K('return')+' t.map { c ->\n'+
+    '    when {\n'+
+    '      c.isLowerCase() -> ('+S("'a'")+' + (c - '+S("'a'")+' + s) % 26)\n'+
+    '      c.isUpperCase() -> ('+S("'A'")+' + (c - '+S("'A'")+' + s) % 26)\n'+
+    '      '+K('else')+' -> c\n    }\n  }.'+F('joinToString')+'("")\n}\n'+
+    K('fun')+' main(){println('+F(fn+cap(algo))+'('+S('"'+si+'"')+')); '+CM('// → '+so)+'}';
+}
+
+// ── R ──
+function rCode(algo,si,so,sk,enc,fn,shift){
+  return CM('# R')+'\n'+F(fn+'_'+algo)+' <- '+K('function')+'(t, shift='+N(shift)+') {\n'+
+    '  chars <- strsplit(t,"")[[1]]; shift<-((shift%%26)+26)%%26\n'+
+    '  result <- sapply(chars, '+K('function')+'(c) {\n'+
+    '    code <- utf8ToInt(c)\n'+
+    '    '+K('if')+' (code>=97&&code<=122) intToUtf8((code-97+shift)%%26+97)\n'+
+    '    '+K('else if')+' (code>=65&&code<=90) intToUtf8((code-65+shift)%%26+65)\n'+
+    '    '+K('else')+' c\n  })\n  paste(result,collapse="")\n}\n'+
+    'cat('+F(fn+'_'+algo)+'('+S('"'+si+'"')+'), "\\n")  '+CM('# → '+so);
+}
+
+// ── Lua ──
+function luaCode(algo,si,so,sk,enc,fn,shift){
+  return CM('-- Lua')+'\n'+K('function')+' '+F(fn+'_'+algo)+'(t, shift)\n'+
+    '  shift = ((shift or '+N(shift)+') % 26 + 26) % 26\n'+
+    '  '+K('return')+' (t:gsub("[a-zA-Z]", '+K('function')+'(c)\n'+
+    '    local b = c>="a" and 97 or 65\n'+
+    '    '+K('return')+' string.char((c:byte()-b+shift)%26+b)\n'+
+    '  end))\n'+K('end')+'\n'+
+    K('print')+'('+F(fn+'_'+algo)+'('+S('"'+si+'"')+'))  '+CM('-- → '+so);
+}
+
+// ── Bash ──
+function bashCode(algo,si,so,sk,enc,fn,shift){
+  return D('#!/bin/bash')+'\n'+CM('# '+algo+' cipher')+'\n\n'+
+    F(fn+'_'+algo)+'() {\n'+
+    '  local t="${1}"; local s='+N(shift)+'; local r=""\n'+
+    '  for ((i=0;i<${#t};i++)); do\n'+
+    '    local c="${t:$i:1}"; local o=$(printf \'%d\' "\'$c")\n'+
+    '    if [[ $o -ge 97 && $o -le 122 ]]; then\n'+
+    '      r+=$(printf "\\\\$(printf \'%03o\' $(( ($o-97+$s)%26+97 )))")\n'+
+    '    elif [[ $o -ge 65 && $o -le 90 ]]; then\n'+
+    '      r+=$(printf "\\\\$(printf \'%03o\' $(( ($o-65+$s)%26+65 )))")\n'+
+    '    else r+="$c"; fi\n  done; echo "$r"\n}\n'+
+    F(fn+'_'+algo)+' '+S('"'+si+'"\n')+CM('# → '+so);
+}
+
+// ═══════════════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════════════
+var ALGO_INFO={
+  caesar:'<strong>Caesar Cipher</strong> — Desplaza cada letra N posiciones en el alfabeto. Clave: número (ej: 3). Uno de los cifrados más antiguos, ~50 a.C.',
+  base64:'<strong>Base64</strong> — Codifica datos binarios en ASCII de 64 caracteres. Muy usado en APIs REST, JWT y emails. No es encriptación real.',
+  rot13:'<strong>ROT13</strong> — Desplazamiento fijo de 13. Auto-inverso: ROT13(ROT13(x)) = x. Sin clave necesaria.',
+  atbash:'<strong>Atbash</strong> — Cifrado hebreo antiguo: A↔Z, B↔Y. Auto-inverso. Sin clave.',
+  vigenere:'<strong>Vigenère</strong> — Usa una palabra clave para variar el desplazamiento letra por letra. Clave: texto (ej: secreto).',
+  xor:'<strong>XOR Cipher</strong> — Operación XOR bit a bit con clave numérica. Auto-inverso. Base de muchos cifrados modernos.',
+  morse:'<strong>Código Morse</strong> — Puntos y rayas para representar letras. Inventado en 1836. Sin clave.',
+  binary:'<strong>Binario</strong> — Cada carácter como 8 bits (0s y 1s). El lenguaje nativo de la computadora.',
+  hex:'<strong>Hexadecimal</strong> — Cada byte como 2 dígitos hex (0–9, A–F). Estándar en programación y depuración.',
+  ascii:'<strong>ASCII / Unicode</strong> — Convierte cada carácter a su valor decimal (A=65, a=97, ñ=241...). Compatible con todo idioma.',
+  hebrew:'<strong>Cifrado Hebreo (Alefbet)</strong> — Sustituye letras latinas (A–Z) por el alfabeto hebreo (אבגד...). Exactamente 26 letras cubren el abecedario.',
+  cicada:'<strong>Cicada Cipher ★</strong> — Inspirado en Cicada 3301 / Liber Primus. Combina Vigenère con sustitución Unicode Latin-Extended. El resultado parece texto corrupto de múltiple encoding (como el texto de la imagen). Clave: texto (ej: 3301).',
+  reverse:'<strong>Invertido</strong> — Invierte el orden de todos los caracteres. Sin clave.'
+};
+var NO_KEY=['base64','rot13','atbash','morse','binary','hex','ascii','hebrew','reverse'];
+
+function updateDesc(){
+  var algo=document.getElementById('algorithm').value;
+  var desc=document.getElementById('algoDesc');
+  desc.innerHTML=ALGO_INFO[algo]||'';
+  document.getElementById('keyWrap').style.opacity=NO_KEY.indexOf(algo)>=0?'0.3':'1';
+  document.getElementById('detectResult').style.display='none';
+}
+
+function swapTexts(){
+  var a=document.getElementById('inputText').value;
+  var b=document.getElementById('outputText').value;
+  document.getElementById('inputText').value=b;
+  document.getElementById('outputText').value=a;
+}
+
+function clearAll(){
+  document.getElementById('inputText').value='';
+  document.getElementById('outputText').value='';
+  document.getElementById('codeOutput').innerHTML='<span class="cmt">// SISTEMA EN ESPERA...\n// "3301 welcomes you, pilgrim."</span>';
+  document.getElementById('infoBar').style.display='none';
+  document.getElementById('detectResult').style.display='none';
+}
+
+function copyCode(){
+  var text=document.getElementById('codeOutput').innerText;
+  navigator.clipboard.writeText(text).then(function(){
+    var b=document.querySelector('.copy-btn');
+    b.textContent='[ ✓ COPIADO ]';
+    setTimeout(function(){b.textContent='[ COPY ]';},2000);
+  });
+}
+
+buildTabs();
+updateDesc();
+</script>
+</body>
+</html>
